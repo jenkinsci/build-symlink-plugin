@@ -24,7 +24,6 @@
 
 package io.jenkins.plugins.build_symlink;
 
-import hudson.Functions;
 import hudson.Util;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
@@ -41,7 +40,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.ClassRule;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import static org.junit.Assume.*;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.BuildWatcher;
@@ -61,8 +59,6 @@ public class RunListenerImplTest {
     @Issue("JENKINS-1986")
     @Test public void buildSymlinks() throws Exception {
         rr.then(r -> {
-            assumeFalse("If we're on Windows, don't bother doing this", Functions.isWindows());
-
             FreeStyleProject job = r.createFreeStyleProject();
             job.getBuildersList().add(new Shell("echo \"Build #$BUILD_NUMBER\"\n"));
             FreeStyleBuild build = job.scheduleBuild2(0).get();
@@ -97,8 +93,6 @@ public class RunListenerImplTest {
     @Issue("JENKINS-2543")
     @Test public void symlinkForPostBuildFailure() throws Exception {
         rr.then(r -> {
-            assumeFalse("If we're on Windows, don't bother doing this", Functions.isWindows());
-
             // Links should be updated after post-build actions when final build result is known
             FreeStyleProject job = r.createFreeStyleProject();
             job.getBuildersList().add(new Shell("echo \"Build #$BUILD_NUMBER\"\n"));
@@ -122,8 +116,6 @@ public class RunListenerImplTest {
     @Test
     @Issue("JENKINS-17137")
     public void externalBuildDirectorySymlinks() throws Exception {
-        assumeFalse(Functions.isWindows()); // symlinks may not be available
-
         // Hack to get String builds usable in lambda below
         final List<String> builds = new ArrayList<>();
 
