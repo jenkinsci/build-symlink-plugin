@@ -1,0 +1,5 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Creates symbolic links to build directories.
+    Prior to JENKINS-37862, this was done by Jenkins core.
+</div>
