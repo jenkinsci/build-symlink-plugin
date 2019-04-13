@@ -99,7 +99,10 @@ import jenkins.model.PeepholePermalink;
             } catch (IOException x) {
                 LOGGER.log(Level.WARNING, null, x);
             }
-            permalinkFile.delete();
+            if (!permalinkFile.delete()) {
+                LOGGER.warning(() -> "failed to delete " + permalinkFile);
+                continue;
+            }
             try {
                 LOGGER.fine(() -> "linking " + pp.getId() + " → " + n + " in " + buildDir);
                 Util.createSymlink(buildDir, n, pp.getId(), listener);
