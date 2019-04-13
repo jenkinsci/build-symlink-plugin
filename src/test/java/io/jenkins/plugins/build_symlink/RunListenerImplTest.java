@@ -28,6 +28,8 @@ import hudson.Util;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.listeners.RunListener;
 import hudson.tasks.ArtifactArchiver;
 import hudson.tasks.Shell;
 import java.io.File;
@@ -35,7 +37,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
 import jenkins.model.Jenkins;
+import jenkins.model.PeepholePermalink;
 import org.apache.commons.io.FileUtils;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -43,7 +48,9 @@ import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.jvnet.hudson.test.BuildWatcher;
+import org.jvnet.hudson.test.FailureBuilder;
 import org.jvnet.hudson.test.Issue;
+import org.jvnet.hudson.test.LoggerRule;
 import org.jvnet.hudson.test.MockFolder;
 import org.jvnet.hudson.test.RestartableJenkinsRule;
 
@@ -55,6 +62,10 @@ public class RunListenerImplTest {
     @Rule public RestartableJenkinsRule rr = new RestartableJenkinsRule();
 
     @Rule public TemporaryFolder tmp = new TemporaryFolder();
+
+    @Rule public LoggerRule logging = new LoggerRule().
+        record(RunListenerImpl.class, Level.FINE).
+        record(PeepholePermalink.class, Level.FINE);
 
     @Issue("JENKINS-1986")
     @Test public void buildSymlinks() throws Exception {
@@ -154,6 +165,72 @@ public class RunListenerImplTest {
 
     private void setBuildsDirProperty(String buildsDir) {
         System.setProperty(/*Jenkins.BUILDS_DIR_PROP*/Jenkins.class.getName() + ".buildsDir", buildsDir);
+    }
+
+    /**
+     * Basic operation of the permalink generation.
+     */
+    @Test
+    public void peepholePermalinks() throws Exception {
+        rr.then(r -> {
+            List<Class<?>> listenerImpls = RunListener.all().stream().map(Object::getClass).collect(Collectors.toList());
+            assertTrue(listenerImpls.toString(), listenerImpls.indexOf(PeepholePermalink.RunListenerImpl.class) < listenerImpls.indexOf(RunListenerImpl.class));
+
+            FreeStyleProject p = r.createFreeStyleProject();
+            FreeStyleBuild b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+
+            File lsb = new File(p.getBuildDir(), "lastSuccessfulBuild");
+            File lfb = new File(p.getBuildDir(), "lastFailedBuild");
+
+            assertLink(lsb, b1);
+
+            // now another build that fails
+            p.getBuildersList().add(new FailureBuilder());
+            FreeStyleBuild b2 = p.scheduleBuild2(0).get();
+
+            assertLink(lsb, b1);
+            assertLink(lfb, b2);
+
+            // one more build and this time it succeeds
+            p.getBuildersList().clear();
+            FreeStyleBuild b3 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+
+            assertLink(lsb, b3);
+            assertLink(lfb, b2);
+
+            // delete b3 and symlinks should update properly
+            b3.delete();
+            assertLink(lsb, b1);
+            assertLink(lfb, b2);
+
+            b1.delete();
+            assertLink(lsb, null);
+            assertLink(lfb, b2);
+
+            b2.delete();
+            assertLink(lsb, null);
+            assertLink(lfb, null);
+        });
+    }
+
+    private void assertLink(File symlink, Run<?, ?> build) throws Exception {
+        assertEquals(build == null ? "-1" : Integer.toString(build.getNumber()), Util.resolveSymlink(symlink));
+    }
+
+    /**
+     * job/JOBNAME/lastStable and job/JOBNAME/lastSuccessful symlinks that we
+     * used to generate should still work
+     */
+    @Test public void legacyCompatibility() throws Exception {
+        rr.then(r -> {
+            FreeStyleProject p = r.createFreeStyleProject();
+            FreeStyleBuild b1 = r.assertBuildStatusSuccess(p.scheduleBuild2(0));
+
+            for (String n : new String[] {"lastStable", "lastSuccessful"}) {
+                // test if they both point to b1
+                assertEquals(new File(p.getRootDir(), n + "/build.xml").length(), new File(b1.getRootDir(), "build.xml").length());
+            }
+        });
     }
 
 }
