@@ -99,8 +99,10 @@ import jenkins.model.PeepholePermalink;
             } catch (IOException x) {
                 LOGGER.log(Level.WARNING, null, x);
             }
-            if (!permalinkFile.delete()) {
-                LOGGER.warning(() -> "failed to delete " + permalinkFile);
+            try {
+                Util.deleteFile(permalinkFile);
+            } catch (IOException x) {
+                LOGGER.log(Level.WARNING, "failed to delete " + permalinkFile, x);
                 continue;
             }
             try {
