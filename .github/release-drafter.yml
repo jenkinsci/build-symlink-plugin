@@ -1,0 +1,2 @@
+_extends: .github
+tag-template: build-symlink-$NEXT_MINOR_VERSION

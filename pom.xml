@@ -14,7 +14,7 @@
     <properties>
         <revision>1.0</revision>
         <changelist>-SNAPSHOT</changelist>
-        <jenkins.version>2.173-rc28242.83a465e8b24f</jenkins.version> <!-- TODO update to master merge commit of https://github.com/jenkinsci/jenkins/pull/3982, then update to first weekly thereafter -->
+        <jenkins.version>2.185-rc28469.6af78cb11bf8</jenkins.version> <!-- last commit of https://github.com/jenkinsci/jenkins/pull/3982; TODO update to 2.185 when released -->
         <java.level>8</java.level>
     </properties>
     <name>Build Symlink Plugin</name>
