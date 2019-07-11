@@ -9,10 +9,10 @@
     </parent>
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>build-symlink</artifactId>
-    <version>1.0</version>
+    <version>${revision}${changelist}</version>
     <packaging>hpi</packaging>
     <properties>
-        <revision>1.0</revision>
+        <revision>1.1</revision>
         <changelist>-SNAPSHOT</changelist>
         <jenkins.version>2.185-rc28469.6af78cb11bf8</jenkins.version> <!-- last commit of https://github.com/jenkinsci/jenkins/pull/3982; TODO update to 2.185 when released -->
         <java.level>8</java.level>
@@ -30,7 +30,7 @@
         <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/${project.artifactId}-plugin</url>
-        <tag>build-symlink-1.0</tag>
+        <tag>${scmTag}</tag>
     </scm>
     <repositories>
         <repository>
